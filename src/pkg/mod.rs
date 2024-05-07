@@ -65,7 +65,7 @@ impl UpdatePkg {
             "platform": platform,
         };
         let find_options = FindOneOptions::builder()
-            .sort(doc! { "appVersion": -1 })
+            .sort(doc! { "appVersion": -1, "version": -1 })
             .build();
         let result = collection.find_one(filter, find_options).await?;
         Ok(result)

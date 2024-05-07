@@ -138,6 +138,32 @@ async fn remove(
     Ok(api_response::ok(0))
 }
 
+#[derive(Debug, Deserialize)]
+struct QueryPlatform {
+    platform: Platform,
+}
+
+#[get("/latest/{project_name}")]
+async fn latest(
+    project_name: web::Path<String>,
+    query_platform: web::Query<QueryPlatform>,
+    db: web::Data<mongodb::Database>,
+) -> Result<HttpResponse, actix_web::Error> {
+    let Ok(update_pkg) =
+        UpdatePkg::find_new_version(&project_name.into_inner(), &query_platform.platform, &db)
+            .await
+    else {
+        return Ok(api_response::err(500, "查询失败"));
+    };
+    let Some(update_pkg) = update_pkg else {
+        return Ok(api_response::err(500, "没有新版本"));
+    };
+    Ok(api_response::ok(update_pkg))
+}
+
 pub fn configure(cfg: &mut ServiceConfig) {
-    cfg.service(index).service(upload).service(remove);
+    cfg.service(index)
+        .service(upload)
+        .service(remove)
+        .service(latest);
 }
